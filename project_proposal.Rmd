@@ -1,0 +1,540 @@
+---
+title: "Hot Spot Policing in St. Louis, Missouri"
+author: Matt Miller
+output: 
+  flexdashboard::flex_dashboard:
+    orentation: columns
+    vertical_layout: fill
+    self_contained: true
+runtime: shiny
+---
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(DT)
+library(tidygeocoder)
+```
+```{r setup, include=FALSE}
+knitr:: opts_chunk$set(cache=TRUE)
+```
+
+# Project Proposal
+
+## Left
+
+### Problematic Conditions {data-height=200}
+
+St. Louis, Missouri, consistently ranks as one of the most dangerous cities in the United States.^["Most Dangerous Places in the U.S in 2024-2025",U.S News and World Report, accessed September 8th, 2024, https://realestate.usnews.com/places/rankings/most-dangerous-places] The city’s Violent Crime Victimization dashboard notes the violent crime victimization rate per 1,000 residents stood at 18 as of 2016, a rate that far exceeded the national rate of 3.863.^["Violent Crime Victimization", City of St. Louis, accessed September 8th, 2024, https://www.stlouis-mo.gov/government/departments/mayor/initiatives/resilience/equity/opportunity/health-safety/violent-crime-victimization.cfm] ^["2016 Crime in the United States", FBI, accessed September 8th 2024, https://ucr.fbi.gov/crime-in-the-u.s/2016/crime-in-the-u.s.-2016/topic-pages/violent-crime#:~:text=There%20were%20an%20estimated%20386.3%20violent%20crimes%20per,compared%20with%20the%202015%20estimated%20violent%20crime%20rate.] Most concerningly, the city of St. Louis held the highest homicide rate in the United States for seven straight years from 2014-2020.^["As murders increased, St. Louis police struggled for resources to solve cases", American Public Media, last modified June 6th, 2024, https://www.apmreports.org/story/2024/06/06/increased-murders-st-louis-police-budget] Furthermore, “of the roughly 1,900 homicides committed in the city of St. Louis from 2014 through 2023, more than 1,000 remain unsolved.^["Why 1,000 homicides in St. Louis remain unsolved", American Public Media, last modified June 3rd, 2024, https://features.apmreports.org/stl/unsolved/unsolved-homicides-in-st-louis.html] The reasons behind the high degree of unsolved homicide cases in St. Louis are multi-faceted but primarily result from staffing shortages.^["As murders increased, St. Louis police struggled for resources to solve cases"] More specifically, “the overall number of St. Louis officers dropped by nearly a third between 2014 and 2024, and there are about 200 fewer uniformed officers currently working than the city budgeted for”.^["As murders increased, St. Louis police struggled for resources to solve cases"] With lower numbers of staff, the police department doesn’t have the resources it needs to solve cases, thus perpetuating a cycle of violence in which homicides occur with no repercussions for perpetrators. If this trend continues, St. Louis will continue in its infamous place on the list of the most dangerous cities in the United States. 
+
+### Policy Issues {data-height=200}
+
+The trauma of homicide in St. Louis disproportionately affects the Black community, which makes up 45% of the population but 89% of murder victims.^["In St. Louis, a racial disparity in whose killings get solved", American Public Media, last modified June 4th, 2024, https://www.apmreports.org/story/2024/06/04/st-louis-racial-disparity-solved-homicides] Moreover, only 45% of the cases involving Black victims were solved between 2014 and 2023, in contrast to two-thirds of cases involving White victims being solved.^["In St. Louis, a racial disparity in whose killings get solved"] Police attribute the disproportionate homicide solve rates to a lack of witness cooperation.^["In St. Louis, a racial disparity in whose killings get solved"] That said, “many residents don’t trust officers after years of targeted policing in Black neighborhoods and incidents of excessive force against Black people”.^["In St. Louis, a racial disparity in whose killings get solved"] Furthermore, a history of violence by perpetrators against witnesses who cooperated with police further discourages cooperation.^["In St. Louis, a racial disparity in whose killings get solved"] Ultimately, this has created an environment in which police feel a lack of cooperation from the community, and residents feel like the police force is not doing enough to protect them and earn their trust.  
+
+### Solution {data-height=450}
+
+To combat the high homicide rate in St. Louis, the city is implementing a program called Save Lives Now (SLN), which seeks to “reduce homicides and shootings by 20% over three years”.^["Save Lives Now!", East-West Gateway Council of Governments, last modified February of 2024 https://www.ewgateway.org/wp-content/uploads/2024/05/SLN-ExecutiveSummary.pdf] SLN was founded on the premise that 0.16% of the population commits 30% or more of the homicides.^["Save Lives Now!"] The program seeks to use a concept called ‘Focused Deterrence’ to reach the subset of individuals most likely to commit violent crimes in the area with an option of using services and treatment to leave the violent crime cycle.^["Save Lives Now!"] For those high-risk individuals who accept services and treatment, Cognitive Behavioral Therapy (CBT) is provided to them to change their suspected violent behavior.^["Save Lives Now!"] Finally, SLN uses a concept called ‘Street Outreach,’ which utilizes professionals that are dispatched “into high-risk neighborhoods to engage and support individuals and groups at high risk for violence”.^["Save Lives Now!"] The program expects these individuals to resolve community conflicts and connect services to at-risk individuals.^["Save Lives Now!"] 
+
+I feel that SLN is an exciting concept that would pair well with a hot spots policing approach as “4% of St. Louis’s geography accounts for over half of the crime in the city”.^["Save Lives Now!"] Together, the two would combat homicides in the St. Louis area and be self-reinforcing. SLN would work to remove high-risk individuals from the violence cycle, while hot spots policing would deter violent offenders outside of SLN from committing homicides. Furthermore, hot spots policing would focus the city’s limited law enforcement resources in areas most needed.
+
+With a focus on preventing homicides, the form of hot spots policing I advocate for would utilize data on violent crimes from around St. Louis to identify where violence occurs most frequently and dispatch officers to those areas frequently as a deterrent. The data to identify violent crime is hosted by the St. Louis Metropolitan Police Department in the city’s open government data portal under the name ‘Crime by neighborhood.’  The crime data is based on the National Incident-Based Reporting System (NIBRS), a standard advocated for by the FBI. The data hosts types of crimes, neighborhoods where they occurred, latitude and longitude coordinates, date of occurrence, etc. Overall, the crime data files provide a comprehensive assessment of crime in St. Louis going back to 2021. Using this data, it will be possible to determine the location of violent crimes around the city. With violent crimes identified, a clustering algorithm called DBSCAN will be employed to construct hot spots around the city that public safety officials can use to dispatch officers. Officers will be dispatched to the hotspots at 15-minute intervals every two hours during peak crime activity. Furthermore, the officers dispatched in these increments will engage in self-initiated activities.  Finally, the hot spots solution would be implemented in a way that complements SLN; namely, through community policing, officers would assist in informing violent offenders in hot spots areas that they have options for treatment and services at their disposal.
+
+Choosing a solution for public safety and the public realm in St. Louis came naturally. As a native of the area, I’ve grown tired of seeing how violence affects the people of the city and the perception of it. Making a difference in safety is important to me, and I feel that many natives of the area agree that enhancing safety first is one of the best ways to make the city more prosperous. Furthermore, I was encouraged to find that St. Louis has a Chief Information Officer, an open government data portal, and much of its data (including crime) in machine-readable format. Therefore, I feel that St. Louis will lend itself well to the project.
+
+
+# Civic Tech Adaptation
+
+## Left
+
+### The Application {data-height=50}
+
+I feel that the White-Collar Crime Risk Zone civic tech project would lend itself well to my project focused on hot spot policing in St. Louis.^["White Collar Crime Risk Zones", The New Inquiry, accessed September 15th, 2024, https://whitecollar.thenewinquiry.com/#9xj5sts] The application displays an interactive heat map of the United States that indicates where white-collar crime will most likely occur. White-collar crime hot spots are denoted in yellow/red colors, where darker hues denote a higher likelihood of white-collar crime incidence. The developers of the application used Python in conjunction with “data provided by the Financial Regulatory Authority (FINRA) to compile incidents of financial malfeasance dating back to 1964”.^["Predicting Financial Crime: Augmenting the Predictive Policing Arsenal", The New Inquiry, accessed September 15th, 2024, https://whitecollar.thenewinquiry.com/assets/whitepaper.pdf] ^["whitecollar",GitHub, accessed September 15th, 2024, https://github.com/thenewinquiry/whitecollar?tab=readme-ov-file] Moreover, the data was “correlated to the location of the perpetrating individual or organization” to enable an analysis of financial crime by location.^["Predicting Financial Crime: Augmenting the Predictive Policing Arsenal"] Once locations were established, the developers used geohashing, a process whereby coordinates are assigned to a unique square within a grid of squares that cover the Earth, to cluster financial crimes.^["Understanding GeoHash:A Simple Yet Powerful Geocoding System", Medium, last modified August 26th, 2023, https://medium.com/@yeshsurya/understanding-geohash-a-simple-yet-powerful-geocoding-system-9f07061db950] With locations clustered within specific geohashes (squares), the developers trained a random forest model on the data to predict the probability of a financial crime occurring within the geohashes that cover the United States.^["Predicting Financial Crime: Augmenting the Predictive Policing Arsenal"] Ultimately, this process enabled a heat map indicating where financial crimes are most likely to occur. Ultimately, the developers of the application intended to help solve the problem of predicting white-collar crime in the United States. They felt that “predictive policing disproportionately targets street crime rather than white-collar crime”.^["Predicting Financial Crime: Augmenting the Predictive Policing Arsenal"] Therefore, they created the application as a “White Collar Crime Early Warning System (WCCEWS)” in hopes of helping law enforcement understand “high-risk zones for incidents of financial crime”.^["Predicting Financial Crime: Augmenting the Predictive Policing Arsenal"]
+
+### The Seven Attributes of Civic Technology {data-height=50}
+
+The White-Collar Crime Risk Zone application fits well within the seven attributes of civic technology.^[Mačiulienė, Monika and Aelita Skaržauskienė, “Building the capacities of civic tech communities through digital data analytics.”, Journal of Innovation & Knowledge, Volume 5, no. 4, (2020): 244-250] First, it involves citizens in the policy process by presenting high-risk white-collar crime zones in an intuitive way. By informing citizens of where a high risk for white-collar crimes exists, citizens are empowered to contact local representatives within law enforcement to better understand if actions are being taken to mitigate risks in high-risk zones. Furthermore, the application involves citizens in monitoring criminal justice service delivery. For example, using the map, citizens can understand where law enforcement services are not meeting the needs of cities given the map’s denotation of where the probabilities of white-collar crime are high. Additionally, citizens can understand where law enforcement services are meeting the needs of cities, given lower probabilities of white-collar crime risk on the map. Next, the application relies on structured information to inform decisions as it uses a dataset from FINRA to disseminate information to application users. It also leverages technology as the underlying model was developed using Python. Next, the application makes the opaque FINRA data and subsequent machine learning outputs more public as it indicates where white-collar crimes are most likely to occur in an easy-to-use map. In doing so, the application takes the previously elite process of cleaning data and applying machine learning models and democratizes it. Citizens don’t need to understand the intricacies of data cleaning and machine learning; they can use the map to understand high-risk areas. Finally, citizens can better hold law enforcement providers accountable as they can clearly understand where white-collar divisions of law enforcement agencies should be spending their time. They can contact law enforcement representatives to ensure time is spent in those high-risk areas.
+
+### Adapting the Application to St. Louis {data-height=50}
+
+The White-Collar Crime Risk Zone application has much utility. I feel that the application's utility could work well in determining the geographic locations of crime hot spots in St. Louis. Specifically, using geocoded data and assigning the data to subsequent geohashes in the St. Louis region would enable a grid view law enforcement could use to establish grid patrols. Furthermore, the heat map component of the application would also work well with the crime data that St. Louis hosts, as it could show where crime hot spots are occurring in a geohashed context. That said, changes to the application are necessary to enable a functioning version with St. Louis’s crime data. Specifically, the area of the geohashes needs to change so that smaller areas are represented in the grid of St. Louis. Furthermore, the code needs to change so that the count of crimes located within specific geohashes changes the shading of the heat map instead of using the probabilities associated with crime occurring. 
+
+# Literature Review
+
+## Left
+
+### Hot Spots Policing in Las Vegas 
+
+The article "Hot Spots Policing in Las Vegas: Results from a Blocked Randomized Controlled Trial in Chronic Violent Crime Locations" utilized several concepts in its associated experiment. Specifically, the study sought to explain how hot spot policing practices influence crime in crime street segments throughout the city through a randomized control trial. The randomization occurred across forty-four street segments, where twenty-two were part of the control group, and 22 were part of the treatment group over the course of a six-month period.^[Corsaro, Nicholas, Robin S. Engel, Tamara D. Herold, Murat Yildirim, and Ryan T. Motz. "Hot Spots Policing in Las Vegas: Results from a Blocked Randomized Controlled Trial in Chronic Violent Crime Locations." Journal of Experimental Criminology 19, no. 1 (03, 2023): 213-235. doi:https://doi.org/10.1007/s11292-021-09485-8. https://proxy1.library.jhu.edu/login?url=https://www.proquest.com/scholarly-journals/hot-spots-policing-las-vegas-results-blocked/docview/2780257927/se-2.] In the context of the study, hot spot policing practices are defined as either increased foot patrols or having a stationary patrol vehicle with emergency lights activated over the treatment street segments.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] Furthermore, the deployment of these tactics occurred “for a total of two additional hours of additional patrol per day, delivered in 15-min intervals every 2 hours during peak periods of activity”.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] The study defines crime as “total crime incidents (Part I and Part II offenses), total calls for service, violent crime incidents, violent calls for service, property crime incidents, and property calls for service.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] Finally, street segments are defined as clusters of crime that occur within a specific part of a street.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] Of these concepts, hot spot policing practices are operationalized under one variable called ‘treatment’ while the concept of crime is split into the six aforementioned dependent variables listed in the crime definition.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] By splitting the concept of crime into six dependent variables, the authors of the study tested the hypothesis that deploying hot spot policing practices has a statistically significant downward effect on crime vs. the null hypothesis, stating that hot spot policing practices do not have a statistically significant impact on crime.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] While there are technically six hypotheses, they all operate over the same unit of analysis, the street segment. In the study, street segments are the unit being measured against; namely, treatment and control groups are applied to street segments, and the regression analysis outcome is applied to street segments. Next, the level of measurement for all six dependent variables is a ratio-level measure, as values are calculated for the categories in addition to order and intervals. Furthermore, the scale of measurement for each of the six dependent variables includes a meaningful zero. On the other hand, the ‘treatment’ independent variable uses 0 and 1 to indicate the absence and presence of treatment.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235] Therefore, the treatment variable's measurement level is still a ratio-level measure but is dichotomous. In terms of establishing causality, the researchers employed a randomized control trial in conjunction with a Difference in Differences approach and a multivariate regression. Overall, the analysis found that total calls for service, violent calls for service, total criminal offenses, and property crimes all decreased by -14.5%, -28.3%, -10.8%, and -16%, respectively.^[Corsaro, Engel, Herold, Yildirim, and Motz "Hot Spots Policing in Las Vegas", 213-235]
+
+### The Effects of Directed Patrol and Self-Initiated Enforcement on Firearm Violence 
+
+The article, The Effects of Directed Patrol and Self-Initiated Enforcement on Firearm Violence: A Randomized Controlled Study of Hot Spot Policing, involves a couple of concepts. The concepts include crime and hot spot policing. In the context of the article, crime is defined as firearm violence, while hot spot policing is defined as “enhanced patrols or the additional execution of self-initiated activity. Self-initiated activities include arrest, pedestrian checks, building checks, occupied vehicle checks, unoccupied vehicle checks, foot patrol, and problem-solving“.^[Rosenfeld, Richard, Michael J. Deckard, and Emily Blackburn. “The Effects of Directed Patrol and Self-Initiated Enforcement on Firearm Violence: A Randomized Controlled Study of Hot Spot Policing.” Criminology 52, no. 3 (August 2014): 428–49. doi:10.1111/1745-9125.12043. https://web-p-ebscohost-com.proxy1.library.jhu.edu/ehost/pdfviewer/pdfviewer?vid=0&sid=21147d9e-3dd7-4bfa-a4c3-eae832b0c26b%40redis] Several variables were used to operationalize the concepts. First, the operationalization of crime occurred by taking counts and then applying a natural log transformation to total firearm violence, firearm assaults, and firearm robberies. These three are the dependent variables of the study. Next, hot spot policing is operationalized through a couple of variables. They include directed patrols and self-initiated activities. These were the treatment variables and were counts of those activities occurring in the study context. Overall, they are represented as ‘treatment 1’ and ‘treatment 2’, respectively.^[Rosenfeld, Richard, and Deckard. "The Effects of Directed Patrol."428-49.] The authors used variables in the study to investigate three hypotheses: first, hot spot policing in the form of directed patrol and self-initiated activities decreases firearm violence. The second hypothesis evaluates whether self-initiated activities are more effective at reducing firearm homicides relative to directed patrols. Finally, the last hypothesis involves exploring if crimes in hot spot areas are displaced to other places or times due to the treatment. Over every hypothesis, the unit of analysis is the street segment, as they are the primary level at which violent crime incidents were calculated for the analysis.^[Rosenfeld, Richard, and Deckard. "The Effects of Directed Patrol."428-49.] Overall, pre and post-treatment values for firearm violence were calculated over street segments, which constituted hot spot areas. Next, the level of measurement across all variables indicates ratio-level measures due to the presence of meaningful zero, values of the categories, order of the categories, and intervals between the categories. Interpreting causality between the study variables occurred through a randomized control trial coupled with a difference in differences approach and multilevel regression analysis. The causal analysis involved in the study produced multiple findings. Overall, the study found that “directed patrols, when not accompanied by other enforcement activity in hot spots, did not produce significant reductions in firearm assaults.^[Rosenfeld, Richard, and Deckard. "The Effects of Directed Patrol."428-49.] Furthermore, the study found that the enforcement activities of “arrests and occupied vehicle checks reduce firearm assaults”.^[Rosenfeld, Richard, and Deckard. "The Effects of Directed Patrol."428-49.] In fact, for the hot spots in which enforcement activities were used as treatment, firearm violence “decreased by 63.8%, from 10.00 to 3.62 incidents per hot spot”.^[Rosenfeld, Richard, and Deckard. "The Effects of Directed Patrol."428-49.] Finally, the study found that displacement of crimes from hot spots to other places or times did not occur.
+
+### The Possible Backfire Effects of Hot Spots Policing 
+
+In the research study The Possible “Backfire” Effects of Hot Spots Policing: an Experimental Assessment of Impacts on Legitimacy, Fear and Collective Efficacy, the authors outline a process whereby some of the perceived negative effects of hot spot policing are explored. Ultimately, the study compares two concepts: hot spot policing and some potential backfire effects of hot spot policing. In the context of the article, hot spot policing is defined as “broken window policing at crime hot spots” for street segments in three Californian cities: Redlands, Colton, and Ontario.^[Weisburd, David, Joshua C. Hinkle, Christine Famega, and Justin Ready. "The Possible "Backfire" Effects of Hot Spots Policing: An Experimental Assessment of Impacts on Legitimacy, Fear and Collective Efficacy." Journal of Experimental Criminology 7, no. 4 (12, 2011): 297-320. doi:https://doi.org/10.1007/s11292-011-9130-z. https://proxy1.library.jhu.edu/login?url=https://www.proquest.com/scholarly-journals/possible-backfire-effects-hot-spots-policing/docview/902224369/se-2.] Broken window policing involves officers never ignoring any disorder they encounter in target areas, no matter how ‘small’ the problem.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320] Backfire effects are increased citizen fear, diminished collective efficacy and reduced police legitimacy.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320] In the literature, increased citizen fear is a theoretical negative effect of broken-windows policing whereby citizens are more fearful of their surroundings due to an increased police presence.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320] Critics of broken-windows policing further theorize that increased citizen fear results in diminished collective efficacy, a process in which community members intervene in community affairs to promote the efficacy of their communities due to a lower willingness to engage in the community due to fear.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320] Finally, critics theorize that the aggressive policing tactics in broken-windows policing leads to a negative perception of police in the community, thus undermining legitimacy.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320] In the study, the backfire effects are operationalized as dependent variables. The values for each dependent variable were calculated using a survey of respondents in the analyzed street segments. The survey was administered pre and post-treatment using a Likert scale to code the variables. On the other hand, broken-windows policing was operationalized as the treatment variable. While not explicitly stated in the article, the experimental design confers the treatment as a binary dichotomous variable. The treatment and dependent variables test the hypothesis that broken-windows policing results in no adverse backfire effects like increased fear, reduced policy legitimacy, and decreased collective efficacy. The hypothesis is tested over street segments, and corresponding individuals fill out the survey. These are the units of analysis in the study. The level of measurement used for the independent and dependent variables varies. As previously mentioned, the treatment variable is a binary dichotomous variable and is a ratio-level measure. The dependent variables were all coded as ordinal variables, utilizing a Likert scale in the survey. To establish causality in the study, the researchers implemented a randomized control trial where 55 street segments were treated, and 55 street segments were assigned the control. Furthermore, the researchers utilized ANOVA tests in conjunction with the survey pre and post-treatment data to determine if the treatment affected backfire effects. Ultimately, the researchers found that “levels of aggressive order maintenance delivered in the study do not increase citizen fear or reduce perceptions of collective efficacy or police legitimacy.^[Weisburd, Hinkle, Famega, and Ready. "The Possible "Backfire" Effects of Hot Spots Policing."297-320]
+
+### The Impact of Hot Spots Policing on Collective Efficacy
+
+The final article considered for analysis, The Impact of Hot Spots Policing on Collective Efficacy: Findings from a Randomized Field Trial, attempts to understand if one concept, hot spot policing, can influence another concept, collective efficacy. Collective efficacy is “a social condition that arises in communities or neighborhoods that contain an interdependent network of people who feel a sense of community, shared ownership, and trust in one another. Collective efficacy is the product of a bond between neighbors that is based upon shared values and goals, derived from a common social situation and context with common adversaries”.^[Rinehart Kochel, Tammy, and David Weisburd. “The Impact of Hot Spots Policing on Collective Efficacy: Findings from a Randomized Field Trial.” JQ: Justice Quarterly 36, no. 5 (August 2019): 900–928. doi:10.1080/07418825.2018.1465579. https://web-p-ebscohost-com.proxy1.library.jhu.edu/ehost/pdfviewer/pdfviewer?vid=0&sid=60cbd14b-fa18-4076-89bf-ca1f08523628%40redis] In the context of this study, hot spot policing is defined as either directed patrols or problem-solving policing. Directed patrols “entail increasing police presence and visibility with a goal of deterring would be criminals by increasing the risk of detection and punishment”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] On the other hand, problem-solving-based policing involves “routine activities theory and aims to investigate and understand the specific nature of the crime problem in order to develop tailored response strategies designed to reduce the opportunities for crime to occur in that location”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Problem-solving-based policing and directed patrol policing concepts are operationalized as treatment variables that indicate either the presence or absence of treatment. Additionally, collective efficacy is measured in the form of three dependent variables: “informal social control, social cohesion, and a combined measure of collective efficacy”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Data for the three dependent variables come from Likert scale surveys to residents of street segments in both pre and post treatment contexts.  The treatment and dependent variables are used to test the hypothesis that hot spot policing practices enhance informal social control, social cohesion, and combined collective efficacy. Testing the hypothesis involved two units of analysis: the street segment over which data was collected and aggregated and the individual level where survey results were disseminated and collected. Data associated with the dependent variables is ordinal as it was collected via a Likert scale on the survey forms. In contrast, the unit of measure for the treatment variables is a ratio-level measure as it can be inferred from the study that dichotomous binary variables were used to indicate the presence and absence of treatment. Establishing causality in the study was accomplished through a randomized control trial where “20 hotspots received the directed patrol treatment, 20 received the problem-solving policing treatment, and 31 were allocated as control sites”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Results from the treatment were interpreted through multilevel mixed-effects regression models. Finally, the study found that “in the short term, residents of directed patrol areas showed significant improvements above residents in the control group in terms of informal social control”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Specifically, following the implementation of the directed patrol treatment, “residents’ assessments of informal social control increased about 17% from baseline”.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Furthermore, residents of the problem-solving based policing treatment and directed patrol treatment saw improvements of 7% and 5% in the long term in terms of informal social control.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928] Social cohesion also increased by 2% for the directed patrol areas relative to baseline.^[Rinehart,Tammy, Weisburd. "The Impact of Hot Spots Policing on Collective Efficacy". 900-928]
+
+# Part 1 - APIs and Open Data and Smart Data {data-navmenu="APIs and Smart Data"}
+
+## Left
+
+### Proposed Initiative
+
+To combat the high rate of violent crime in St. Louis, I plan to use the city’s crime data in conjunction with machine learning clustering methodologies to develop a map showing violent crime hotspots around the city. Utilizing machine learning to develop associated crime clusters is advantageous as it strictly uses the data to determine hot spots rather than arbitrarily clustering crime according to other dimensions like neighborhoods, patrol beats, or geographic grids. In this sense, the algorithm truly enables hot spot policing in accordance with data.  The map's creation through machine learning would inform the deployment of officers to hot spot areas and is, therefore, part of the policy process's development stage. In this context, the hot spot policing map will set the agenda for police officers as the problem areas are defined, ultimately enabling them to formulate an adequate police response. With the problem areas identified through machine learning clusters, law enforcement could move to the implementation stage of the policy process. 
+
+While the hot spot areas on the map will be created with an algorithm, implementing hot spot area policing will be open to multiple activities. For example, the literature review notes that actual hot spot policing activities still require further research to understand how to optimize benefits. That said, some key themes emerged in the literature review that can adequately inform the implementation of hot spot policing. First, the officers conducting hot spot policing should engage in self-initiated activities in violent crime hot spots. Self-initiated activities include arrest, pedestrian checks, building checks, occupied vehicle checks, unoccupied vehicle checks, foot patrol, and problem-solving.^[Rosenfeld, Richard, and Deckard. ”The Effects of Directed Patrol.”428-49.] Furthermore, these activities should occur “in 15-minute intervals every two hours during peak activity.^[Corsaro, Engel, Herold, Yildirim, and Motz “Hot Spots Policing in Las Vegas”, 213-235] According to the literature review, these activities have effectively reduced hot spot crime in randomized control trials. 
+
+Following the development of hot spot areas and the implementation of hot spot policing practices, evaluation becomes necessary to assess the efficacy of the hot spot policing methodology in St. Louis. Several data analyses are recommended to understand whether hot spot policing is positively affecting the violent crime rate in St. Louis. The most direct focus of the analysis is the violent crime rate in crime hot spots following the implementation of hot spot policing practices. If hot spot implementation is functioning, we could expect a reduced violent crime rate in hot spot areas. Lower violent crime in these areas would manifest in St. Louis’s crime data. In addition to reducing violent crime, successful implementation of hot spot policing might also affect other community-based metrics related to revitalization. Namely, one would expect that communities with lower crime rates would experience lower home vacancies due to residents staying in their communities, lower building code violations due to residents feeling confident in the future of their communities and reinvesting, and lower rates of building demolition due to residents acquiring previously vacant properties due to renewed confidence in the community. Finally, one would further expect that 311 calls for certain types of service would decrease in crime hot spot areas due to renewed collective efficacy.^[Rinehart,Tammy, Weisburd. “The Impact of Hot Spots Policing on Collective Efficacy”. 900-928] All the data to measure these outcomes (crime rate, revitalization, and 311 calls for service) are found in the St. Louis open data portal. The metrics related to revitalization are available via API, while the crime data and 311 calls for service are available via CSV download.  
+
+## Right
+
+### Indicators {data-height=130}
+
+The indicators outlined below are split between API and Non-API sources. It should be noted that crime data in St. Louis is not available via API. It is instead only available for download. Furthermore, while 311 data is available via API, it is only available with an API key, which was not provided to me and the number of rows returned is limited at 1,000. Therefore, I felt it made more sense to import the 311 data.
+
+### API Indicators
+
+#### Number of Vacant Homes
+
+The vacant buildings dataset from St. Louis's open data portal is simple: it is a list of all known vacant buildings in the city. Important columns for analysis include the vacant building ID (to attain counts of vacant buildings), Project Address, Project City, and Project State. Obtaining the address fields will enable the sourcing of latitude and longitude coordinates so that an understanding of the counts of vacant buildings within crime hot spots can be developed.
+
+Tracking the number of vacant homes in crime hot spot areas is essential as vacant homes indicate low desirability in the area. When people feel safe in an area, it becomes more desirable. Therefore, if crime decreases in a hot spot, the number of vacant residences will decrease over time. Counting the changing number of vacant homes in hot spots following a hot spot policing intervention will provide insights into the community sentiment toward crime.
+
+
+```{r vacant_homes,echo=FALSE,cache=TRUE}
+
+vacant_url <- "https://www.stlcitypermits.com/API/VacantBuilding/GetAllVacantBuildings"
+
+vacant_response <- GET(vacant_url)
+vacant_data <- fromJSON(content(vacant_response, as = "text"))
+
+
+#Remove violations column as it produces a text-heavy column in output
+knitr::kable(head(vacant_data %>% select(-Violations)))
+
+```
+
+#### Number of Demolition Permits
+
+Like the vacant buildings dataset, the demolition permits dataset is simple. It is a list of the demolition permits issued by the buildings division of St. Louis. It also contains information regarding the contracting company associated with each demolition and the status of the demolition permit. Notably, the API for this dataset only enables viewers to pull data for the last 30 days. Important columns for analysis include Permit Id(to attain counts of demolition permits), Project Address, Project City, and Project State. Like the vacant buildings dataset, address fields can be used to obtain latitude and longitude coordinates to analyze demolition permit counts in hot spot areas.
+
+Tracking demolition permits is another methodology to measure community desirability. Typically, poorly maintained structures are demolished, suggesting urban decay in communities. Therefore, if the number of demolition permits decreases following a hot spots policing initiative, it would suggest a form of community revitalization as buildings become better maintained. If revitalization in the community persists, it would suggest that residents feel safe and that the hot spots policing initiative was a success.
+
+
+```{r demolition_permits,echo=FALSE,cache=TRUE}
+
+demolition_url <- "https://www.stlcitypermits.com/API/Demolition/GetDemolitionPermits"
+
+demolition_response <- GET(demolition_url)
+data_demolition <- fromJSON(content(demolition_response, as = "text"))
+
+
+
+knitr::kable(head(data_demolition))
+
+```
+
+#### Number of Building Inspection Violations
+
+The building inspections for existing structures dataset contains information regarding the building inspection type, the inspection address, the inspection result, and other metadata about the unit being inspected. Overall, it lists all building inspections for existing structures in St. Louis. Like the demolition permits dataset, the API for this dataset only enables viewers to pull data for the last 30 days. Columns of importance for analysis include the inspection id (for counts), inspection type, inspection address, project address, project city, and inspection result. The building inspections dataset serves as the basis for the next three metrics.
+
+The first metric is the number of building inspection violations. Like the other desirability and revitalization metrics, the number of building inspection violations in a crime hot spot should decrease after the successful implementation of hot spot policing as reinvestment returns to the community. Overall, if residents feel safe, collective efficacy strengthens, thereby enhancing community stability and reinvestment efforts.  
+
+
+```{r building_inspection_violations,echo=FALSE,cache=TRUE}
+
+
+building_inspections_url <- "https://www.stlcitypermits.com/API/HCES/GetExistingStructureInspections"
+
+inspection_response <- GET(building_inspections_url)
+data_inspections <- fromJSON(content(inspection_response, as = 'text'))
+
+
+#Remove violations column as it produces a text-heavy column in output
+knitr::kable(head(data_inspections %>% select(-Violations)))
+
+```
+
+#### Percentage of Inspections Resulting in Violations
+
+The second metric affiliated with building inspections, the percentage of inspections resulting in violations, is important as it provides insight into a relative measure of building inspections resulting in violations, thus providing an additional lens through which violations can be assessed. Overall, the percentage of inspections resulting in violations is expected to decrease over time following a successful implementation of hot spot policing as the community feels safer reinvesting.
+
+
+#### Percentage of HCD Inspections Resulting in Violations
+
+The final metric for building inspections is the percentage of housing conservation district (HCD) inspections resulting in violations. HCD inspections ensure that houses in designated districts meet standards and codes, thus ensuring housing quality and preventing urban decay. If these inspections result in violations, urban decay is implied. Therefore, a successful hot spot policing intervention would lower the percentage of HCD inspections resulting in violations.
+
+
+### Non-API Indicators
+
+#### Number of Violent Crimes
+
+The crime data provided by the City of St. Louis provides very useful information for determining crime hot spots and assessing the efficacy of a hot spot policing approach. Specifically, the dataset lists crimes for each month, the date when each crime occurred, the time, the type of crime committed, the latitude and longitude for the crime, whether a firearm was used, etc. 
+
+In addition to using violent crime data to understand violent crime hot spots throughout the city, understanding if the number of violent crimes decreases following a hot spot policing initiative is imperative in understanding the approach's efficacy. Therefore, the number of violent crimes is listed as a metric.
+
+
+```{r crimes,echo=FALSE,cache=TRUE,message=FALSE,warning=FALSE}
+
+setwd('C:/Users/matth/OneDrive - Johns Hopkins/Technology and Innovation')
+
+violent_crime_categories <- c("Aggravated Assault", "Simple Assault",
+                              "Murder and Nonnegligent Manslaughter", "Negligent Manslaughter", 
+                              "Justifiable Homicide", "Rape", "Sodomy", "Sexual Assault with an Object",
+                              "Fondling", "Incest", "Statutory Rape", "Kidnapping/Abduction", "Robbery")
+
+
+#Get data from 2021-2023
+crime_2021_2023_data <- read_csv('twentyonetwentythree.csv',
+                                 col_types = cols(OccurredFromTime = col_time(format = "%H:%M:%S"))) %>%
+                          filter(year(IncidentDate) %in% c(2021, 2022, 2023)) %>%
+                          filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from January of 2024
+jan_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/03/January2024.csv")
+jan_2024_data <- read_csv(jan_2024_url,
+                          col_types = cols(OccurredFromTime = col_time(format = "%H:%M:%S"))) %>% 
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 1) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+               
+                 
+#Get data from February of 2024
+feb_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/03/February2024.csv")
+feb_2024_data <- read_csv(feb_2024_url,
+                          col_types = cols(OccurredFromTime = col_time(format = "%H:%M:%S"))) %>% 
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 2) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from March of 2024
+mar_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/05/Downloadable-NIBRS-Crime-File-March-2024-CSV.csv")
+mar_2024_data <- read_csv(mar_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 3) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from Apr of 2024
+apr_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/05/Downloadable-NIBRS-Crime-File-April-2024-CSV.csv")
+apr_2024_data <- read_csv(apr_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 4) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from May of 2024
+may_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/06/May2024.csv")
+may_2024_data <- read_csv(may_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 5) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from June of 2024
+june_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/07/June2024.csv")
+june_2024_data <- read_csv(june_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 6) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from July of 2024
+july_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/08/July2024.csv")
+july_2024_data <- read_csv(july_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 7) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from August of 2024
+aug_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/09/August2024.csv")
+aug_2024_data <- read_csv(aug_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 8) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Get data from September of 2024
+sep_2024_url <- ("https://slmpd.org/wp-content/uploads/2024/10/September2024.csv")
+sep_2024_data <- read_csv(sep_2024_url) %>% 
+                  mutate(IncidentDate = as_date(mdy_hms(IncidentDate))) %>%
+                  filter(year(IncidentDate) == 2024 & month(IncidentDate) == 9) %>%
+                  filter(NIBRSCategory %in% violent_crime_categories)
+
+#Append data
+crime_data <- rbind(crime_2021_2023_data, jan_2024_data,feb_2024_data,mar_2024_data,apr_2024_data, may_2024_data, june_2024_data, july_2024_data, aug_2024_data, sep_2024_data)
+
+crime_data <- crime_data %>% mutate(city_state = "St. Louis, MO") %>% mutate(address = paste(IncidentLocation, city_state, sep = " "),
+                                                                             year = year(IncidentDate))
+
+class(crime_data$year)
+
+write_csv(crime_data,"all_crime_data.csv")
+write_csv(crime_data %>% filter(., year == 2024), "2024_crime.csv")
+write_csv(crime_data %>% filter(., year == 2024 & month(IncidentDate) == 09), "september_2024_crime.csv")
+
+knitr::kable(head(crime_data))
+
+```
+
+#### Number of 311 Requests
+
+The 311 data for St. Louis is available via API but requires a key and is limited to a 1,000-row return. I wasn’t provided a key, so downloading the CSV files was necessary. The data displayed in the data table is for 2024.
+
+The dataset for 311 services provides a wealth of information, including service descriptions, groupings of service types, the report date, completion date, address of service request, etc.
+
+Certain types of 311 data are useful as lower rates of certain types of 311 requests point to strong collective efficacy and community in general. For example, filtering the dataset by group to reflect service calls for nuisance complaints, graffiti, property inspections (interior/exterior), abandoned vehicles, trash/debris, and weeds/grass would greatly indicate urban decay. Therefore, by counting these types of requests before and after a hot spot policing intervention, one could infer if the hot spot policing intervention resulted in increased collective efficacy and community resiliency.
+
+
+```{r 311_requests,echo=FALSE,cache=TRUE}
+
+service_url <- "https://www.stlouis-mo.gov/data/upload/data-files/csb.zip"
+zip_file <- "csb.zip"
+
+download.file(service_url, destfile = zip_file, mode = 'wb')
+unzip(zip_file, exdir = 'cbs_data')
+
+unzipped_files <- list.files('cbs_data', full.names = T)
+data_list <- lapply(unzipped_files, read.csv)
+
+knitr::kable(head(data_list[[17]]))
+
+```
+
+# Part 2 - APIs and Open Data and Smart Data {data-navmenu="APIs and Smart Data"}
+
+## Left
+
+### Smart City Data
+
+In assessing smart city indicators for St. Louis, it was apparent that indicators in the form of sensor data were not easily attainable. Therefore, I focused on citizen-centric smart city data, specifically indicators affiliated with inclusion and equality. Searching for two indicators associated with inclusion and equality made sense in the context of the proposed policy initiative. Inclusion and equality data can often reflect the socioeconomic conditions of communities, thereby highlighting areas at a higher risk of crime since poor socioeconomic conditions are often correlated with crime.
+
+The first smart city indicator is the employment rate by census tract. The employment rate for each census tract originates from the American Community Survey (5 year) from 2022 that is specific to the St. Louis urban area designation. Accessing the data used in the calculation for employment rate by census tract was accomplished through an API connected to the U.S Census Bureau via the TidyCensus package in R. To calculate the employment rate by census tract, inputs for the total number of individuals employed by census tract (employedE) were dived by the total number of individuals estimated in the labor force by census tract (labor_forceE) and multiplied by one hundred. 
+
+The second smart city indicator, the poverty rate by census tract, is also sourced using the U.S Census Bureau’s API via the TidyCensus package. Furthermore, the base data supporting the poverty rate by census tract calculation originates from the American Community Survey (5 year) from 2022. Like the employment rate by census tract, it is also filtered for census tracts associated with the St. Louis urban area designation. Calculating the poverty rate is accomplished through a variable that estimates the total number of individuals in each census tract below the poverty line (below_povertyE) and an estimate for the total number of individuals for which poverty designation was determined by census tract (poverty_totalE). The calculation takes below_povertyE, divides it by poverty_totalE, and multiplies the output by one hundred to determine the poverty rate by census tract. 
+
+Both the employment and poverty rates by census tract are socioeconomic indicators. As a result, they each provide data that enables the policymakers of St. Louis to understand how to target populations with programs that promote “social equality, equitable urban growth, and the reduction of the divide between groups of the local population.”^[ Csukás, Máté S., and Roland Z. Szabó. "The Many Faces of the Smart City: Differing Value Propositions in the Activity Portfolios of Nine Cities." Cities 112, (2021): 103116. Accessed October 8, 2024. https://doi.org/10.1016/j.cities.2021.103116.]. For example, enhancing the equity of areas with poor socioeconomic programs may include targeted job training, infrastructure investment, and tax breaks for local businesses. These practices would improve equity and promote inclusion and social cohesion of disenfranchised areas with the broader economy of St. Louis. Given that the indicators enable the implementation of programs in disadvantaged communities, they are affiliated with inclusion and equality, one of the nine dimensions of smart city data initiatives outlined in The Many Faces of the Smart City: Differing Value Propositions in the Activity Portfolios of nine cities.^[Csukás, Máté S., and Roland Z. Szabó. "The Many Faces of the Smart City: Differing Value Propositions in the Activity Portfolios of Nine Cities." Cities 112, (2021): 103116. Accessed October 8, 2024. https://doi.org/10.1016/j.cities.2021.103116.] Furthermore, by targeting areas with poor socioeconomic prospects with appropriate programs, St. Louis can promote an inclusive environment where citizens with fewer means receive assistance from the city in promoting equitable urban growth. Moreover, the poverty and employment rates also provide insight into hot spot policing in St. Louis. Poor socioeconomic conditions are known to have a relationship with crime.^[Graif, Corina, Andrew S. Gladfelter, and Stephen A. Matthews. "Urban Poverty and Neighborhood Effects on Crime: Incorporating Spatial and Network Perspectives." Sociology Compass 8, no. 9 (2014): 1140. Accessed October 8, 2024. https://doi.org/10.1111/soc4.12199.] Therefore, understanding how poverty and employment rates vary across census tracts allows city policymakers to predict where conditions are favorable for crime hot spots to appear. Furthermore, by furthering programs that seek to improve the socioeconomic conditions of census tract areas, policymakers can work to create conditions that mitigate the risk of crime hot spots developing. Overall, socioeconomic metrics like poverty and employment rates can provide policymakers with information on making the city more inclusive and equitable while indicating where conditions favor crime hot spots. 
+
+
+**Please Note that DT::datatable was used instead of DT::renderDataTable for the visual below as renderDataTable didn't allow for the creation of an html document. Therefore, datatable was used**
+```{r smart_indicators_data, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE, cache=TRUE}
+
+acs_data <- get_acs(
+  geography = 'tract',
+  state = 'MO',
+  year = 2022,
+  variables = c(
+    below_poverty = "B17001_002",
+    poverty_total = "B17001_001",
+    employed = "B23025_004",
+    labor_force = "B23025_002"
+  ),
+  output = 'wide',
+  geometry = TRUE
+)
+
+us_urban_areas <- get_acs(
+  geography = 'urban area',
+  variables = 'B01001_001',
+  geometry = TRUE,
+  year = 2019,
+  survey = 'acs1'
+) %>%
+  filter(estimate >= 200000) %>%
+  mutate(urban_name = str_remove(NAME,",.*$"))
+
+
+joined_dat <- acs_data %>%
+  st_join(us_urban_areas,left = F) %>%
+  filter(urban_name == 'St. Louis') %>%
+  select(-NAME.x,-NAME.y,-variable,-estimate,-moe,-GEOID.y,-urban_name, -below_povertyM, -poverty_totalM, -employedM, -labor_forceM, -geometry) %>%
+  mutate(
+    poverty_perc = (below_povertyE / poverty_totalE) * 100,
+    employment_rate = (employedE / labor_forceE) * 100
+  )
+
+
+
+```
+
+```{r smart_indicators,echo=FALSE}
+DT::datatable(joined_dat)
+```
+
+# Policy Position Statement
+
+## Left
+
+### Problem, Question, and Claim {data-height=130}
+
+St. Louis, Missouri, is consistently ranked as one of the most dangerous cities in the United States due to its high rate of violent crime. Many mayors and city governments have attempted to answer the question: What is the best way to address violent crime in the city? While violent crime has many variables and potential solutions, hot spot policing is the best methodology to approach the problem in St. Louis, as it complements the city’s current socially driven approach.
+
+### Justification
+
+#### Reasons
+
+St. Louis’s current plan to address violent crime has five approaches: improving 911 dispatch, building a crisis intervention network, putting the right people in the right seats, reducing gun violence, and stabilizing a broken correctional system.^["State of Public Safety 2024".City of St. Louis, Missouri. Access October 14th, 2024.https://www.stlouis-mo.gov/government/departments/mayor/initiatives/upload/State-of-Public-Safety-2024-sm.pdf] Overall, this involves making investments in 911 services to improve response time, utilizing a network of mental health experts and other support personnel to de-escalate potentially dangerous situations, appointing effective leaders in the public safety apparatus, effectively seizing illegal firearms through law enforcement, and investing in jail capacity and services.^["State of Public Safety 2024"] St. Louis’s focus on building a crisis intervention network is complemented by work that Mission St. Louis, a local non-profit, is executing. Mission St. Louis has an initiative called ‘Show Me Peace’ that utilizes a network of individuals called violence interrupters to communicate with likely perpetrators of violent acts in neighborhoods with high crime to de-escalate potentially deadly situations.^["Show Me Peace".Mission St. Louis.Accessed October 14th, 2024.https://www.showmepeace.org/about] Mission St. Louis notes that this approach has proven to “reduce shootings and homicides by 30-60% without increasing incarceration”.^["Show Me Peace"] 
+
+Finally, it’s worth noting that the city of St. Louis is implementing a new anti-violence program that seeks to reduce homicides by 20% over three years called “Save Lives Now”.^["Regional Save Lives Now plan aims to curb violent crimes within 3 years".5 On Your Side.Accessed october 14th, 2024.https://www.ksdk.com/article/news/local/as-seen-on-tv/regional-save-lives-now-plan-aims-to-curb-violent-crimes/63-8d3b4331-0d34-4609-a184-1086e46040e7] “Save Lives Now” will function based on three components: focused deterrence, cognitive behavioral therapy, and street outreach.^["Here's how the first regional initiative in the St. Louis area aims to reduce shootings, homicides by 20% in three years".5 On Your Side. Accessed October 14th, 2024. https://www.ksdk.com/article/news/crime/first-regional-initiative-in-the-st-louis-area-aims-to-reduce-shootings-homicides/63-e3759dca-456a-4759-a7a8-2827088cd12e] Focused deterrence is based around the notion that .16% of the population commits over 30% of violence crime in the St. Louis region; therefore, violence deterrence efforts should focus on these individuals.^["Save Lives Now!".East-West Gateway Council of Governments.Accessed October 14th, 2024. https://www.ewgateway.org/save-lives-now/] An understanding of the individuals that are likely to commit violent crimes enables messaging by police and other program support personnel; namely, in the delivery of a message to potential perpetrators that support in the form of cognitive behavioral therapy is available if those individuals seek to leave a life of crime.^["Save Lives Now!"] Finally, the street outreach component of the plan assigns support personnel to communities experiencing high levels of violence to mediate and de-escalate potentially dangerous situations.^["Save Lives Now!"] Overall, it’s very similar to the work that Mission St. Louis organization is doing in its ‘Show Me Peace’ program. 
+
+Taken together, these initiatives indicate the city and non-profits are interested in pursuing a strong focus on the social determinants of violence in the form of networks that seek to address violent behavior before it takes place. That said, St. Louis’s plan to combat violence is notably lacking in detail on how the city will more efficiently address the enforcement of violent crimes through its law enforcement personnel. Efficiency in enforcement is of prime concern since the city has 200 officers less than currently budgeted.^["As murders increased, St. Louis police struggled for resources to solve cases"] 
+
+Furthermore, utilizing law enforcement officers to deter crimes is of prime importance to the business community since the perception of high crime in the community is hindering economic growth.^["Set homicide reduction targets, business groups urge St. Louis' elected leaders".St. Louis Business Journal. Last Modified May 12, 2023. https://www.bizjournals.com/stlouis/news/2023/05/12/homicide-reduction-targets-st-louis.html] Specifically, the business community mentions, “Today, too many people feel unsafe living in, visiting or working in the St. Louis metro. Both The reality and perception of widespread violence negatively impact the ability of the metro area to attract new residents, businesses, and visitors and to foster economic growth”.^["Set homicide reduction targets, business groups urge St. Louis' elected leaders"] Finally, the business community mentions that the city’s focus on social programs is worthwhile but must be preceded by a reduction in crime.^["Set homicide reduction targets, business groups urge St. Louis' elected leaders"] 
+
+Overall, St. Louis needs to accompany its focus strong focus on the social determinants of violent crime with a data-driven law enforcement approach so that social programs are not the only city-implemented programs associated with addressing violent crime. To decrease the violent crime rate quickly, St. Louis should also implement a well-tested and proven approach, hot spot policing. Using the two methods of social programs and hot spot policing offers St. Louis the best chance of decreasing its violent crime rate.
+
+#### Elaboration
+
+Furthermore, the crime data from the Saint Louis police department indicates that the city needs to change its approach to violent crime. On the first tab of the dashboard below, it’s possible to see the count of violent crimes in St. Louis from January 2021 to September 2024 (blue line). Please note the seasonality that exists in violent crime, where warmer months typically see more violent crime. Furthermore, please note that the moving average (orange line) shows a very slight downward trend in violent crime throughout St. Louis but is primarily flat. With a nearly flat violent crime trend since January 2021, it’s clear that St. Louis must do more to decrease the violent crime rate to an extent that would make citizens feel safer. Additional support for hot spot policing is evident on tab two of the dashboard, which indicates that violent crimes are clustered in certain regions. Overall, it’s possible to see hot spots in downtown St. Louis, Northern St. Louis, and Southern St. Louis. Overall, this evidence suggests that hot spots are discernable in the data and should be operated upon via a hot spot policing approach. The third tab of the dashboard indicates how violent crime breaks out by neighborhood and year. Through this visual, it’s possible to understand the crime trend by neighborhood. Overall, this tab indicates that violent crime by neighborhood is up in some neighborhoods, down in others, and flat in the remaining neighborhoods. This mix in the trend of violent crimes by neighborhoods supports the first tab, showing that violent crime has been roughly flat since January 2021, thus indicating that new law enforcement programs should be implemented to reduce the violent crime rate. Finally, the fourth tab of the dashboard indicates how the number of violent crimes by NIBRS category changed between 2021 and 2023. Notably, many categories show an overall downward or flat trend, but the increase in simple assaults primarily offsets the crime reduction in other categories. Again, this graph highlights that the violent crime rate is roughly flat after considering all categories, suggesting that an approach like hot spot policing should be used to help drive the overall rate of violent crime lower.
+
+### Anticipated Reactions
+
+Implementing a hot spot policing strategy will elicit a range of reactions from involved stakeholders. Given their preference for reducing crime as quickly and efficiently as possible, the business community will likely champion the data-driven effort. Specifically, the business community authored a report in which hot spot policing was explicitly mentioned as an evidence-based approach that could help reduce crime in St. Louis.^["Set homicide reduction targets, business groups urge St. Louis' elected leaders"] On the other hand, reactions from city government and local non-profits such as Mission St. Louis will likely be mixed. Mission St. Louis’s Show Me Peace strategy specifically mentions that the program seeks to reduce the homicide rate without increasing incarceration.^["Show Me Peace"] Therefore, representatives from Mission St. Louis will likely worry that an increased police presence in neighborhoods with high rates of violent crime will increase the rate of incarceration for individuals in those neighborhoods. Furthermore, St. Louis’s government will likely be skeptical of the program, especially if it is operated without complementary social programs. In discussing the business community’s report on safety in St. Louis, a spokesman for Mayor Tishaura Jones indicated that the city looks forward to “regional solutions to upstream problems like substance abuse, housing instability and poverty – major drivers of crime that aren’t emphasized in the report but are necessary to address to make the St. Louis region a safer place for all”.^["Set homicide reduction targets, business groups urge St. Louis' elected leaders"] Given the conflicting interests of the business community, city government, and local non-profits, it’s clear that the city should pursue a mixed approach where law enforcement utilizes its resources as efficiently as possible through hot spot policing to reduce the violent crime rate while utilizing Save Lives Now, the crisis intervention network, and Mission St. Louis’s work to address the social determinants of crime. Overall, this mixed approach would enable the city to address crime from multiple perspectives, thus enhancing the likelihood of success. That said, the city must focus on data-driven policing in the form of hot spot policing to complement its work on social determinants. Not doing so risks utilizing limited resources ineffectively, thus increasing the likelihood of persistently high crime and subsequent low economic growth.
+
+## Right
+
+```{=html}
+<iframe width="100%" height="100%" src="https://lookerstudio.google.com/embed/reporting/f1da759f-d0bb-487d-89a0-6a77d075e77c/page/p_cp1bq1b0ld" frameborder="0" style="border:0" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" data-external="1"></iframe>
+```
+
+
+# Spatial and User Generated Data
+
+## Left
+
+### Spatial Data
+In the map to the right, points denoted in purple represent 311 requests made by the citizens of St. Louis in October 2024, while the heat map represents violent crimes seen in St. Louis throughout 2024. The 311 and crime data originate from St. Louis’s open data portal. It’s worth noting that only October 2024 data was chosen for 311 requests, as St. Louis’s 311 data is coded by address, not by latitude and longitude. Therefore, attaining latitude and longitude coordinates via geocoding through the tidygeocoder library became necessary to plot 311 requests. While batch geocoding enabled the plotting of points, it was computationally time-consuming, so only October points were chosen for the visualization. Furthermore, plotting additional 311 points on the map produced much density, making it difficult to see the distribution of 311 requests. It’s also worth noting that only crimes for 2024 are plotted on the map, as plotting all crime points going back to 2021 created a very dense heat map where it was difficult to discern hot spots.
+
+Evaluating the distribution of crime and 311 data across St. Louis is an interesting exercise. Regarding crime, it’s clear that clusters are most focused in downtown St. Louis, Northern St. Louis, and Parts of Southern St. Louis. Notably, crime doesn’t appear particularly clustered in the city's South Central and Southwestern portions. The 311 data associated with October of 2024 is dispersed widely across the city, but notable clusters exist. Some clusters, like in the South Central and Southwestern portions of the city, are noteworthy as they don’t appear to overlap much with crime in 2024. In my opinion, this suggests strong citizen engagement in maintaining neighborhoods. On the other hand, there are areas like Northern St. Louis near Jennings and Southern St. Louis near Gravios Park and Dutchtown, where crime and 311 requests appear to overlap significantly, thus suggesting neighborhoods needing additional assistance.
+
+The distribution of 311 and crime data directly relates to the hot spot policing policy initiative of my project. Specifically, assessing crime clusters is paramount to initiating a hot spot policing methodology in St. Louis. While this map doesn’t directly utilize the machine learning methodology I plan to employ in creating crime hot spots for police to use in the designation of their patrols, it does provide a framework to assess crime clustering from a high level, ultimately providing information on which areas of St. Louis will likely see additional patrols under a hot spots policing methodology. Furthermore, 311 requests, especially in crime hot spot areas, likely indicate neighborhood disarray and/or citizen engagement. Therefore, evaluating 311 requests in crime hot spots before and after implementing a hot spots initiative will enable an analysis of whether additional policing increases, decreases, or has no discernable effect on 311 requests in the area. Overall, 311 requests in this context can serve as a proxy to understand the success of hot spot policing in reducing neighborhood disarray.
+
+Given the map data, the hot spot methodology will likely be concentrated in Northern St. Louis, Downtown St. Louis, and parts of Southern St. Louis. Therefore, when the machine learning methodology is applied to crime data, crime clusters will likely present themselves in these areas. Additionally, the crime clusters established using 2024 data will inform if the intervention of hot spot policing is successful in the established clusters, as the count of crimes should decrease following the intervention. Furthermore, using 311 requests as proxy data to understand the viability of neighborhoods within crime clusters post-intervention can be executed by simply evaluating the counts of 311 requests and comparing them to pre-intervention numbers. The crime and 311 data will inform the argument of the policy initiative that implementing a hot spot policing methodology reduces crime in hot spots while enhancing the viability of neighborhoods within crime hot spots. 
+
+```{r, echo=FALSE}
+Sys.setenv(MAPBOX_API_TOKEN = "pk.eyJ1IjoibWlsbGUxMzYiLCJhIjoiY20yZXh4bW40MDFvczJscHg2eHpkZWJzbyJ9.D9ual8lWW48S1b5PzipWRA")
+```
+
+## Right
+
+```{=html}
+<iframe width='100%' height='100%' src="https://api.mapbox.com/styles/v1/mille136/cm2ey31y400aj01p98nx4fo3i.html?title=false&access_token=pk.eyJ1IjoibWlsbGUxMzYiLCJhIjoiY20yZXhxMTB2MDM1OTJrcHgzZDFieGFwMiJ9.uiDcHUNXyttWjPXVT5o6Xw&zoomwheel=false#12.4/38.64711/-90.21427" title="Crime 2024 Incidents" style="border:none;"></iframe>
+
+```
+
+
+# Outcome Metrics {data-navmenu="Outcome Metrics"}
+
+## Left
+
+### Metric 1: The Number of Violent Crimes
+
+Assessing the number of violent crimes following the hot spot policing initiative is paramount in understanding the initiative’s success. For this metric, the initiative can utilize a time series of the counts of violent crimes in hot spot areas before, during, and after the policy implementation to assess if the hot spots policing methodology reduces the count of violent crimes in hot spots. Ultimately, this metric will assess if the policy initiative is successful in its primary goal, to reduce violent crime in St. Louis
+
+Constructing this measure will be accomplished through St. Louis’s crime data. Specifically, the counts of violent crimes with latitude and longitude coordinates within crime hot spots will be tabulated to develop the count of crimes in hot spots over time. Through this simple construction, developing a time series of the counts within crime hot spots is possible.
+
+### Metric 2: The Number of 911 Calls for Police Service
+
+Like the number of violent crimes metric, understanding the number of 911 calls for police service in crime hot spots is important in understanding the success of the hot spot policing initiative. Specifically, a successful implementation initiative would likely reduce the number of 911 calls for police services in crime hot spots. For this reason, assessing the number of 911 calls for police services via a time series that begins before the hot spot policing initiative and continues during and after the intervention is important to understand the overall efficacy of the initiative.
+
+Developing this metric is challenging as the data doesn’t exist in St. Louis’s open data portal. As a result, working with the St. Louis police department to obtain their internal data on 911 calls for police services will be necessary to develop the metric. Once the data is obtained, a time series including the counts for all 911 calls for police services within crime hot spots before, during, and after the initiative can be utilized to understand if the initiative has a discernible effect on the number of 911 calls for police services within hot spots.
+
+### Metric 3: Community Trust in Law Enforcement
+
+Finally, assessing the success of the hot spots policing initiative should also include a measurement of how the community perceives law enforcement in hot spots after the initiative so that it can be compared to the perception before the initiative took place. In the context of the hot spots policing initiative, one would expect the community to have a positive view of law enforcement after the implementation of the initiative as positive results would likely indicate a positive reception of the police department in hot spot areas, unless hot spots policing was not carried-out in a community-friendly manner. 
+
+To develop the measure of the community’s perception of law enforcement, a survey would need to be configured using a series of questions that entail Likert scales to assess perception of law enforcement both before and after the hot spots policing initiative. This type of survey data does not currently exist, so the City of St. Louis would need to develop the survey and issue it to residents of hot spot areas.
+
+### Applying the Metrics to Results-Based Accountability
+
+In conjunction, the three outcome metrics address results-based accountability. First, the number of 911 calls for police services metric addresses how much public safety services are administered during the initiative through the time series that measures the number of 911 calls for police services in crime hot spots. Assessing how well services are delivered is accomplished through the third metric, community trust in law enforcement. Overall, if the services are delivered well, the community will respond with positive scores for their perception of law enforcement. Understanding the amount of change produced is accomplished through the first metric, the number of violent crimes. By identifying the time series of violent crimes in hot spots before, during, and after the hot spot implementation, it’s possible to know if the methodology produced a positive change in the form of less crime over time. Finally, assessing the quality of the change produced can be accomplished through the first metric by utilizing a longer time horizon in the time series. Specifically, a high-quality change would manifest in the form of lower crime rates in hot spots over a longer time horizon. Therefore, high quality service delivery would show lower counts of violent crime in hot spots one year following the implementation relative to the count of violent crimes in hot spots before the initiative.
+
+
+## Right
+
+### Visualization
+
+The first tab of the Looker dashboard below provides a great framework for how the first metric, the number of violent crimes, could look when visualized. Through visualization, it’s possible to determine how the count of violent crime could change following the implementation of a hot spot policing initiative. Specifically, the blue and orange lines would indicate a downward trend, thus suggesting that the initiative is successful and crime conditions have improved in hot spot areas. Furthermore, assessing the moving average at the start of the initiative and comparing it to the moving average after the initiative could highlight the success of the initiative. 
+
+```{=html}
+<iframe width="100%" height="100%" src="https://lookerstudio.google.com/embed/reporting/f1da759f-d0bb-487d-89a0-6a77d075e77c/page/5rSFE" frameborder="0" style="border:0" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"data-external="1"></iframe>
+```
+
+### Disability Accommodation {data-height=130}
+
+It’s likely that people with visual impairments live in crime hot spots around St. Louis. Therefore, it’s necessary for the third metric, community trust in law enforcement, to include employees that can orally record survey responses from those with visual impairments in hot spot areas. By orally collecting information, it’s possible to have a broader representation of responses from all, including those who are visually impaired. Secondly, it’s important for those who are visually impaired to have a meaningful interpretation of the results of the hot spot policing initiative. Therefore, the hot spot policing initiative should include a write-up of the main findings of the hot spot policing initiative that has text to speech capabilities. This would ensure that those with visual impairments would be able to access the results of the initiative to understand its success and where improvements might be made. 
+
+# Outcome Metrics in Shiny {data-navmenu="Outcome Metrics"}
+
+## Left
+
+### Description {data-height=175}
+The scatterplot below uses two base variables. The first is the total violent crime count (outcome metric) and the second is the total ARPA expenditures. ARPA expenditures originate from the American Rescue Plan, a plan that provides "direct economic assistance for American workers families, small businesses, and industries" as a result of the COVID-19 pandemic.^["About the American Rescue Plan",U.S Department of the Treasury, accessed November 10th, 2024, https://home.treasury.gov/policy-issues/coronavirus/about-the-american-rescue-plan#:~:text=The%20American%20Rescue%20Plan%20was%20passed%20by%20Congress,in%20American%20Rescue%20Plan%20programs%20and%20tax%20credits.] Violent crime counts originate from the City of St. Louis's police department while the ARPA Expenditures data originates from the Mayor's office.^["Crime Data Dataset",The City of St. Louis, accessed November 10th, 2024, https://www.stlouis-mo.gov/data/datasets/dataset.cfm?id=69] ^["American Rescue Plan Act (ARPA Dataset)",The City of St. Louis, accessed November 10th, 2024, https://www.stlouis-mo.gov/data/datasets/dataset.cfm?id=122.] Both variables have been transformed by taking their respective 30 day moving average to garner a more generalized understanding of trends between the two variables. All data points are reflective of days between September of 2021 and August of 2024.
+
+In thinking through a variable that might covary with counts of crimes that had not been chosen for another part of the project, ARPA Expenditures stood out as they manifest in the form of economic assistance to communities. Therefore, the thinking was that as ARPA expenditures increase, we might expect a decrease in crime. That said, the scatterplot above indicates that a relationship between ARPA expenditures and crime does not exist. As a result, additional ARPA Expenditures likely won't lead to a reduction in crime. Additionally, a successful implementation of hot spots policing in St. Louis likely won't have an impact on ARPA Expenditures.
+
+```{r library}
+library(zoo)
+library(scales)
+```
+
+```{r data}
+
+crime_data <- read_csv('all_crime_data.csv')
+arpa_data <- read_csv('arpa_expenditures.csv') %>%
+              mutate(DATE=mdy(DATE)) %>%
+              filter()
+
+min_arpa_date <- min(arpa_data$DATE)
+max_arpa_date <- max(arpa_data$DATE)
+
+crime_data_grouped <- crime_data %>%
+                        dplyr::filter(IncidentDate >= min_arpa_date & IncidentDate <= max_arpa_date) %>%
+                        group_by(IncidentDate) %>%
+                        summarize(crime_count = n_distinct(IncidentNum))
+
+arpa_data_grouped <- arpa_data %>%
+                      group_by(DATE) %>%
+                      summarize(expenditure_total = sum(AMOUNT))
+
+joined_data <- left_join(crime_data_grouped, arpa_data_grouped, by = c("IncidentDate" = "DATE")) %>%
+                mutate(expenditure_total = replace_na(expenditure_total,0),
+                       crime_count_moving = rollmean(crime_count, k = 30, fill = NA, align = 'right'),
+                       expenditure_total_moving = rollmean(expenditure_total, k = 30, fill = NA, align = 'right'))
+                
+
+
+```
+
+### Date Range Selector {data-height=100}
+
+```{r date_slicer, cache=FALSE}
+dateRangeInput(
+  inputId = 'date_range',
+  label = 'Select Date Range',
+  start = min_arpa_date,
+  end = max_arpa_date,
+  min = min_arpa_date,
+  max = max_arpa_date
+  
+)
+
+```
+
+### Scatterplot
+```{r plot, echo=FALSE,cache=FALSE}
+renderPlot(
+ggplot(filter(joined_data,IncidentDate >= input$date_range[1] & IncidentDate <= input$date_range[2]), 
+              aes(x = expenditure_total, y = crime_count, size = expenditure_total)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = 'lm',color='blue',se=F) +
+  ggtitle('ARPA Expenditures vs. Crime Counts From August 2021 - August 2024') +
+  ylab('Total Crime Count') +
+  xlab('Total ARPA Expenditures') +
+  scale_x_continuous(labels = dollar) +
+  guides(size='none') +
+  labs(caption = "*Each point represents a day*")
+  
+)
+
+```
